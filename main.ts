@@ -8,7 +8,7 @@
 //
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -16,7 +16,15 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
+// Hand in exactly what is in this repo: clear the two output folders first,
+// so a file deleted from the repo (or an old screenshot) never survives from
+// an earlier run and gets handed in as part of the entry — a stale fifth
+// screenshot, or an old game file, would make the scorer refuse the entry.
 mkdirSync(out, { recursive: true });
+for (const dir of ['game', 'screenshots']) {
+  const target = join(out, dir);
+  if (existsSync(target)) rmSync(target, { recursive: true, force: true });
+}
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
 if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
